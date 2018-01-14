@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+    <title>Trackster</title>
+    <head>
+    <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- Bootstrap CSS -->
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="{{ static_url('scripts/BootstrapMenu.js')}}" type="application/javascript"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+        <script src="{{ static_url('scripts/code.js') }}" type="application/javascript"></script>
+        <link rel="stylesheet" href="{{ static_url('css/styles.css') }}">
+        <!--<script type="text/javascript" src="http://www.youtube.com/player_api"></script>-->
+    </head>
+  <body onload="onLoad();">
+    <!--<script type="application/javascript">-->
+        <!--&lt;!&ndash;{% autoescape None %}&ndash;&gt;-->
+
+        <!--&lt;!&ndash;setData('{{data}}');&ndash;&gt;-->
+        <!--&lt;!&ndash;getData();&ndash;&gt;-->
+    <!--</script>-->
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <div class="container-fluid">
+        <div class="jumbotron">
+            <div class="row justify-content-start">
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="container" style="padding-right:0px; padding-left:0px;">
+                            <h1 class="display-3" style="margin-bottom:0px;">Trackster</h1>
+                            <p class="lead" style="padding-left: 15px;">Another youtube converter</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <input id="input_playlistURL" type="text" class="form-control playlist" placeholder="Youtube Playlist URL" aria-label="Playlist URL" style="display:none">
+                        <div id="input_artistalbum">
+                            <div class="row">
+                                <div class="container" style="padding-left:0px; padding-right: 0px">
+                                  <input id="input_artist" type="text" class="form-control artist-album artist" placeholder="Artist" aria-label="Artist">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="container" style="padding-left:0px; padding-right: 0px">
+                                   <input id="input_album" type="text" class="form-control artist-album album" placeholder="Album" aria-label="Album">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--<div class="col-sm-1 d-flex align-items-center" >-->
+                        <!--<div class="btn-group" style="height:95%">-->
+                             <!--<button type="button" class="secondary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >-->
+                                 <!--<i class="fa fa-search fa-2x" aria-hidden="true"></i>-->
+                             <!--</button>-->
+                            <!--<div class="dropdown-menu">-->
+                                <!--<a class="dropdown-item" href="#">Action</a>-->
+                                <!--<a class="dropdown-item" href="#">Another action</a>-->
+                                <!--<a class="dropdown-item" href="#">Something else here</a>-->
+                                <!--<div class="dropdown-divider"></div>-->
+                                <!--<a class="dropdown-item" href="#">Separated link</a>-->
+                            <!--</div>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                    <div class="col-sm-2 d-flex align-items-top" >
+                        <button id="add_task" data-index="0" type="button" class="btn btn-secondary">Add Playlist</button>
+                        <div id="mb_search" class="btn-group" data-toggle="tooltip" data-placement="top" title="search and add" style="height:75px">
+                            <button  type="button" class="secondary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="width:70px">
+                                 <i id="mb_searchIcon" class="fa fa-search fa-2x" aria-hidden="true"></i>
+                             </button>
+                            <div class="dropdown-menu mblist scrollable-menu">
+                                <h6 class="dropdown-header">
+                                    <div class="row fluid" style="height:10px">
+                                        <div class="col-sm-2">
+                                            <p class="text-sm-left" style="width:100%">
+                                                Score
+                                            </p>
+                                        </div>
+                                        <div class="col-sm-3">
+                                            <p class="text-sm-left" style="width:100%">
+                                                Artist
+                                            </p>
+                                        </div>
+                                        <div class="col-sm-3">
+                                            <p class="text-sm-left" style="width:100%">
+                                                Album
+                                            </p>
+                                        </div>
+                                         <div class="col-sm-2">
+                                            <p class="text-sm-left" style="width:100%">
+                                                Tracks
+                                            </p>
+                                        </div>
+                                        <div class="col-sm-2">
+                                            <p class="text-sm-left" style="width:100%">
+                                                Released
+                                            </p>
+                                        </div>
+                                    </div>
+                                </h6>
+                                <div id="mb_results">
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="dl_type" class="btn-group" data-toggle="tooltip" data-placement="top" title="Download method" style="height:75px">
+                            <button id="task_type" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="sr-only">Toggle Dropdown</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a id="0" class="dropdown-item normal" href="#">Playlist</a>
+                                <a id="1" class="dropdown-item normal" href="#">Artist/Album</a>
+                                <a id="2" class="dropdown-item normal" href="#">Split Album</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid playlist">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-sm-10">
+                    <h2>Queue</h2>
+                </div>
+                <div class="col-sm-2 text-right">
+                    <div class="btn-group" data-toggle="buttons">
+                        <label id="filter_playlist" class="btn btn-block btn-primary active">
+                          <input  type="checkbox" name="playlist" checked autocomplete="off">
+                            <span class="fa fa-youtube fa-1x"></span>
+                        </label>
+                        <label id="filter_artistalbum" class="btn btn-block btn-primary active">
+                          <input type="checkbox" name="ArtistAlbum" checked autocomplete="off">
+                             <span class="fa fa-music fa-1x"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="queue scrollList"">
+            <div role="tablist" aria-multiselectable="true">
+                <div id="queue" class="card">
+                </div>
+            </div>
+        </div>
+
+         <div class="card bg-light">
+             <div class="row">
+                 <div class="col-sm-4">
+                     <nav class="navbar navbar-light bg-light">
+                        <a id="statusbar_total" class="navbar-brand" href="#">2 tasks in list</a>
+                     </nav>
+
+                 </div>
+                 <div class="col-sm-3">
+                     <nav class="navbar navbar-light bg-light">
+                        <a id="statusbar_playlist" class="navbar-brand" href="#">1 youtube playlist</a>
+                     </nav>
+                 </div>
+                  <div class="col-sm-4">
+                     <nav class="navbar navbar-light bg-light">
+                        <a id="statusbar_artistalbum" class="navbar-brand" href="#">1 artist/album</a>
+                     </nav>
+                  </div>
+                 <div class="col-sm-1 text-right">
+
+                    <div class="btn-group" style="height:100%">
+                        <div id="filter_list" class="btn-group dropup">
+                          <button class="fa fa-filter fa-2x" style="width: 50px; height:100%" type="button" data-toggle="dropdown">
+                          </button>
+                          <ul class="dropdown-menu list scrollable-menu" role="menu">
+                             <div class="filter_items">
+                             </div>
+                          </ul>
+                        </div>
+
+                        <div class="btn-group dropup">
+                          <button class="fa fa-cog fa-2x" style="width: 50px; height:100%" type="button" data-toggle="dropdown">
+                          </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenu">
+
+                                <h6 class="dropdown-header">Tasks</h6>
+                                <button id="clearcompleted" class="dropdown-item" type="button">Remove completed tasks</button>
+                                <button id="clearalltasks" class="dropdown-item" type="button">Remove all tasks</button>
+                                <h6 class="dropdown-header">Cache</h6>
+                                <button id="clearcache" class="dropdown-item" type="button">Clear search cache</button>
+                                <!--<h6 class="dropdown-header">Info</h6>-->
+                                <!--<button class="dropdown-item" type="button">Stats</button>-->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+             </div>
+         </div>
+
+    </div>
+    <div class="modal fade" id="modal_form" data-confirm="false" data-type="removecompleted" tabindex="-1" role="dialog" aria-labelledby="modal_removecompleted" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modal_title"></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+          </div>
+          <div class="modal-footer">
+            <button id="modal_form_confirm" type="button" class="btn btn-primary" data-dismiss="modal">Yes</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+  </body>
+</html>

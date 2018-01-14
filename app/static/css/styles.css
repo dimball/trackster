@@ -1,0 +1,175 @@
+.wrapper {
+  display: flex;
+  border: 1px solid black;
+  display:flex;
+}
+.col_title {
+  height: 80%;
+  width: 80%;
+}
+.col_progress {
+  height: 100%;
+  width: 20%;
+}
+table {
+    width: 100%;
+}
+progress {
+    width: 100%
+
+}
+.progressDiv
+{
+   width: 100%
+}
+.playlistheader:hover
+{
+    background:CornflowerBlue;
+}
+.progressbar-container{
+  display: inline-block;
+  width: 100px;
+  margin: 0;
+  position: relative;
+  top: 5px;
+}
+
+.dropdown-menu-right
+{
+    width: 50px;
+}
+
+.checkbox label:after,
+.radio label:after {
+    content: '';
+    display: table;
+    clear: both;
+}
+
+.checkbox .cr,
+.radio .cr {
+    position: relative;
+    display: inline-block;
+    border: 1px solid #a9a9a9;
+    border-radius: .25em;
+    width: 1.3em;
+    height: 1.3em;
+    float: left;
+    margin-right: .0em;
+    margin-left: .0em;
+}
+
+.radio .cr {
+    border-radius: 50%;
+}
+
+.checkbox .cr .cr-icon,
+.radio .cr .cr-icon {
+    position: absolute;
+    font-size: .8em;
+    line-height: 0;
+    top: 50%;
+    left: 20%;
+}
+
+.radio .cr .cr-icon {
+    margin-left: 0.04em;
+}
+
+.checkbox label input[type="checkbox"],
+.radio label input[type="radio"] {
+    display: none;
+}
+
+.checkbox label input[type="checkbox"] + .cr > .cr-icon,
+.radio label input[type="radio"] + .cr > .cr-icon {
+    transform: scale(3) rotateZ(-20deg);
+    opacity: 0;
+    transition: all .3s ease-in;
+}
+
+.checkbox label input[type="checkbox"]:checked + .cr > .cr-icon,
+.radio label input[type="radio"]:checked + .cr > .cr-icon {
+    transform: scale(1) rotateZ(0deg);
+    opacity: 1;
+}
+
+.checkbox label input[type="checkbox"]:disabled + .cr,
+.radio label input[type="radio"]:disabled + .cr {
+    opacity: .5;
+}
+[class*="col-"] {
+  padding-right: 0px;
+  padding-left: 0px;
+}
+
+[class*="col-"]:first-child {
+  padding-left: 0px;
+}
+
+[class*="col-"]:last-child {
+  padding-right: 0px;
+}
+.input-group .status
+{
+  padding-right: 0px;
+  padding-left: 0px;
+}
+.row
+{
+  margin-left: 0px;
+  margin-right: 0px;
+  width:100%;
+}
+
+.item
+{
+  display:inline-block;
+  word-wrap: break-word;
+  white-space: unset;
+}
+.text-truncate
+{
+  white-space: unset;
+
+}
+.scrollable-menu {
+    height: auto;
+    max-height: 400px;
+    overflow-x: hidden;
+}
+#nav {
+    list-style: none;
+    position:fixed;
+    left: 0;
+    top:220px;
+}
+.form-control {
+    width: 100%;
+
+}
+
+.dropdown-menu.list
+{
+    width: 500px;
+}
+.dropdown-menu.mblist
+{
+    width: 1000px;
+}
+.scrollList {
+    height: 600px;
+    overflow-y: scroll;
+
+}
+.btn-block+.btn-block
+{
+    margin-top:0rem;
+}
+.different {
+    color:red;
+}
+.same {
+    color:blue;
+}
+
