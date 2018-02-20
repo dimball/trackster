@@ -1115,6 +1115,32 @@ function CreateSinglePlaylistEntry(data)
     sHtml += "</div>";
     $(sHtml).prependTo($('#queue'));
 
+    $("#item_" + data.id.internal).sortable({
+        handle: function(e) {
+//        what index am I?
+//          console.log('Dragging item at index ' + $("#item_" + data.id.internal).index())
+
+
+        },
+        stop: function( ) {
+//            console.log("Dragging item at index @ to index @" )
+//            send message to server to say that you have changed position in the queue
+            var ar = $("#item_" + data.id.internal).sortable('toArray')
+            for (i = 0;i<ar.length;i++)
+            {
+                console.log(ar[i])
+            }
+            var payload = CreateDataItem(['custom'])
+            payload.id.internal = data.id.internal
+            payload.custom = ar
+            ws.send(CreateData("server/sort/playlist", payload))
+//            send the whole list to the server, rebuild the items in the playlist to the correct array, then return
+//            the list here and update the data in it.
+
+        }
+    });
+    $("#item_" + data.id.internal).disableSelection();
+
     if (data.playlist.type == 'splitalbum')
     {
         if (data.title.video.youtube != '')

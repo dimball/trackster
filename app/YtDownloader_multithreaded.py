@@ -348,29 +348,36 @@ class c_utility():
     def get_tracks(self, id):
 
         time.sleep(random.uniform(0.1, 1.0))
-        trackresult = musicbrainzngs.search_recordings(reid=id)
 
-        dataArray = []
-        # print(trackresult)
-        for recording in trackresult['recording-list']:
-            payload = self.create_payload(['musicbrainz.track'])
+        try:
+            dataArray = []
+            trackresult = musicbrainzngs.search_recordings(reid=id)
 
-            payload['mbtrack']['title'] = recording['title']
-            # print(recording)
-            if 'length' in recording:
-                duration = float(recording['length'])
-                # print(duration)
-                durationInSeconds = int(duration/1000)
 
-                timeObj = self.durationToHHMMSS(durationInSeconds)
-                timeString = timeObj['hour'] + ":" + timeObj['minute'] + ":" + timeObj['second']
+            # print(trackresult)
+            for recording in trackresult['recording-list']:
+                payload = self.create_payload(['musicbrainz.track'])
 
-                payload['mbtrack']['duration'] = {
-                    'seconds': durationInSeconds,
-                    'formatted': timeString
-                }
-            dataArray.append(payload)
-        return dataArray
+                payload['mbtrack']['title'] = recording['title']
+                # print(recording)
+                if 'length' in recording:
+                    duration = float(recording['length'])
+                    # print(duration)
+                    durationInSeconds = int(duration/1000)
+
+                    timeObj = self.durationToHHMMSS(durationInSeconds)
+                    timeString = timeObj['hour'] + ":" + timeObj['minute'] + ":" + timeObj['second']
+
+                    payload['mbtrack']['duration'] = {
+                        'seconds': durationInSeconds,
+                        'formatted': timeString
+                    }
+                dataArray.append(payload)
+                return dataArray
+        except musicbrainzngs.NetworkError:
+            self.printMessage("Could not connect to musicbrainz server at:" + MBHOST)
+            return None
+
     # def findTracklist(self, id):
     #     time.sleep(random.uniform(0.1, 1.0))
     #     tracklist = musicbrainzngs.search_recordings(reid=id)
@@ -1041,10 +1048,13 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, c_utility):
             self.printMessage("searching on musizbrainz for tracks")
             try:
                 search_results = self.get_tracks(payload['musicbrainz']['id'])
-                # returns an array
-                # store the search results in the database
-                self.insert_data(payload['musicbrainz']['id'], search_results, 'mbsearch_tracks', dbcursor)
-                return search_results
+                if search_results != None:
+                    # returns an array
+                    # store the search results in the database
+                    self.insert_data(payload['musicbrainz']['id'], search_results, 'mbsearch_tracks', dbcursor)
+                    return search_results
+                else:
+                    return None
             except requests.exceptions.ConnectionError as e:
                 self.printMessage("Could not connect to internet")
 
@@ -1776,6 +1786,22 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, c_utility):
                     dataInsertItem['playlist']['duration'] = payload['playlist']['duration']
                     self.insert_data(payload['id']['internal'], dataInsertItem, "playlist")
                     self.updateClients(self.createDataItem('client/update/splitalbum/duration', payload))
+                elif dataItem['type'] == 'server/sort/playlist':
+                    payload = dataItem['payload']
+                    dataInsertItem = self.getdata('playlist', self.data, payload)
+                    sortedList = []
+                    for i in range(len(payload['custom'])):
+                        position = payload['custom'][i]
+                        position = position.split('_')[1]
+                        index = dataInsertItem['index'][position]
+                        item = dataInsertItem['items'][index]
+                        sortedList.append(item)
+
+                    dataInsertItem['items'] = sortedList
+                    self.insert_data(payload['id']['internal'], dataInsertItem, "playlist")
+                    self.updateClients(self.createDataItem('client/update/sortedPlaylist', dataInsertItem))
+                    # self.updateClients(self.createDataItem('client/add/multiplevideos', playlistItem), clientid)
+
                 # elif dataItem['type'] == 'server/store/results':
                 #     payload = dataItem['payload']
                 #     print(payload)
@@ -1973,7 +1999,7 @@ class trackworker(threading.Thread, c_utility):
         timeString = timeObj['hour'] + ":" + timeObj['minute'] + ":" + timeObj['second']
         payload['row']['offset']['formatted'] = timeString
         self.dataTransport.put(self.createDataItem('server/add/video', payload))
-        offset = offset+payload['row']['duration']['seconds']+1
+        offset = offset+payload['row']['duration']['seconds']
         return offset
 
 
@@ -2207,27 +2233,29 @@ class trackworker(threading.Thread, c_utility):
                         payload,
                         self.dbsearch
                     )
+                    if tracklist != None:
+                        for track in tracklist:
+                            self.addTrackItem(
+                                payload['id']['internal'],
+                                track,
+                                payload['title']['playlist']['artist'],
+                                payload['title']['playlist']['album'],
+                                counter
+                            )
 
-                    for track in tracklist:
-                        self.addTrackItem(
-                            payload['id']['internal'],
-                            track,
-                            payload['title']['playlist']['artist'],
-                            payload['title']['playlist']['album'],
-                            counter
-                        )
-
-                        customPayload = self.create_payload(['custom'])
-                        customPayload['id']['internal'] = payload['id']['internal']
-                        customPayload['custom']['progress'] = (progressCounter/len(tracklist)*100)
-                        customPayload['custom']['reset'] = True
-                        customPayload['custom']['message'] = "loading track information"
-                        self.dataTransport.put(self.createDataItem('server/result/import', customPayload))
-                        progressCounter += 1
-                        counter += 1
+                            customPayload = self.create_payload(['custom'])
+                            customPayload['id']['internal'] = payload['id']['internal']
+                            customPayload['custom']['progress'] = (progressCounter/len(tracklist)*100)
+                            customPayload['custom']['reset'] = True
+                            customPayload['custom']['message'] = "loading track information"
+                            self.dataTransport.put(self.createDataItem('server/result/import', customPayload))
+                            progressCounter += 1
+                            counter += 1
 
 
-                    self.printMessage("track import completed")
+                        self.printMessage("track import completed")
+                    else:
+                        self.printMessage("track list returned None. May be due to connection error to Musicbrainz server")
                 elif payload['playlist']['type'] == 'splitalbum':
                     print('creating split album data type')
                     tracklist = self.main.getMbTrackResults(
@@ -2300,25 +2328,28 @@ class PlayListManager(threading.Thread, c_utility):
         self.add('STOP')
 
     def addPlaylistEntry(self, ID, artist, album, numItems, playlisttype):
-        internalID = uuid.uuid4()
+        internalID = str(uuid.uuid4())
         # print("artist:" + artist)
         if playlisttype == 'splitalbum':
             video_id = str(uuid.uuid4())
             payload = self.create_payload(['title.playlist', 'download.splitalbum', 'playlist.playlist', 'row'])
             payload['playlist']['videoItem'] = self.create_payload(['title.video', 'musicbrainz', 'thumbnail', 'download.video', 'playlist.video', 'row'])
-            payload['playlist']['videoItem']['id']['internal'] = str(internalID)
+            payload['playlist']['videoItem']['id']['internal'] = internalID
             payload['playlist']['videoItem']['id']['video'] = video_id
 
             artistalbum = artist + '-' + album
+            formattype = 'bestaudio/best',
+            outtmpl = self.params['folder']['incomplete'] + '/' + artist + '/' + artistalbum + '/' + \
+                   internalID + '@' + video_id + '.%(ext)s'
 
-            payload['playlist']['videoItem']['download']['current']['ydl_opts']['outtmpl'] = self.params['folder'][
-                                                                      'incomplete'] + "/" + artist + "/" + artistalbum + "/" + \
-                                                                  internalID + \
-                                                                  "@" + video_id + '.%(ext)s'
+            ydl_opts = {'format':formattype,
+                        'outtmpl':outtmpl
+            }
+            payload['playlist']['videoItem']['download']['current']['ydl_opts'] = ydl_opts
         else:
             payload = self.create_payload(['title.playlist', 'download.playlist', 'playlist.playlist', 'row'])
 
-        payload['id']['internal'] = str(internalID)
+        payload['id']['internal'] = internalID
         payload['download']['playlistId'] = ID
         payload['title']['playlist']['artist'] = self.escape_string(artist)
         payload['title']['playlist']['album'] = self.escape_string(album)
@@ -2331,7 +2362,7 @@ class PlayListManager(threading.Thread, c_utility):
         payload['index'] = {}
 
         self.dataTransport.put(self.createDataItem('server/add/playlist', payload))
-        return str(internalID)
+        return internalID
     def add(self,payload):
         # self.printMessage("adding:%s" % payload)
         self.PlaylistQueue.put(payload)
