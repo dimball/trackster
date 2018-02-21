@@ -9,6 +9,9 @@ var g_iEnd = 0
 var g_connectingTimerObj = null
 var g_dltype = 1;
 //Utilities
+function isNumeric(value) {
+    return /^-{0,1}\d+$/.test(value);
+}
 function unescape_string(text)
 {
 //    console.log('before:' + text)
@@ -118,7 +121,9 @@ function CreateDataItem(parts = ['filter', 'title.video', 'title.playlist', 'thu
         payload.row.duration = new Object()
         payload.row.duration.seconds = ''
         payload.row.duration.formatted = ''
-
+        payload.row.offset = new Object()
+        payload.row.offset.seconds = ''
+        payload.row.offset.formatted = ''
     }
     if (parts.includes('playlist.video'))
     {
@@ -510,12 +515,53 @@ function serverHandler(data)
                     console.log("Trying to set data " + payload.playlist.duration.formatted)
                     $("#" + payload.id.internal + " .text-right.startTime").text("["+ payload.playlist.duration.formatted + "]")
                 break;
+                case "client/update/sort/videolist":
+                    console.log("updating videolist")
+                    PartiallyUpdateVideoList(payload)
+                break;
+                case "client/update/sort/videolist/full":
+                    console.log("FULL updating videolist")
+                    FullUpdateVideoList(payload)
+//                    PartiallyUpdateVideoList(payload)
+                break;
+
             }
         }
     }
 }
-function updateStatusbar(payload)
+function FullUpdateVideoList(payload)
 {
+   if ($("#" + payload.id.internal + "_toggle").hasClass("fa-chevron-down"))
+   {
+        $("#item_" + payload.id.internal).empty()
+        for (var i in payload.items)
+        {
+//                        console.log(items[i])
+            CreateSingleVideoEntry(payload.playlist.type, payload.items[i])
+        }
+
+
+   }
+}
+function PartiallyUpdateVideoList(payload)
+{
+    if ($("#" + payload.id.internal + "_toggle").hasClass("fa-chevron-down"))
+    {
+        for (var i in payload.items)
+            {
+                row = payload.items[i]
+//                console.log(payload.id.internal + "_" + row.id.video)
+//                console.log($("#" + payload.id.internal + "_" + row.id.video  + " .form-control.duration.start").text())
+                $("#" + payload.id.internal + "_" + row.id.video  + " .form-control.duration.start").val(row.row.offset.formatted)
+                $("#" + payload.id.internal + "_" + row.id.video  + " .form-control.duration.end").val(row.row.duration.formatted)
+                $("#" + payload.id.internal + "_" + row.id.video  + " .input-group-addon.tracknumber").text(row.row.tracknumber)
+
+//                $("#" + payload.id.internal + "_" + row.id.video  + " .form-control.track").text(row.title.video.track)
+
+            }
+            $("#" + payload.id.internal + " .text-right.startTime").text("["+ payload.playlist.duration.formatted + "]")
+
+    }
 
 }
 
@@ -1115,34 +1161,22 @@ function CreateSinglePlaylistEntry(data)
     sHtml += "</div>";
     $(sHtml).prependTo($('#queue'));
 
-    $("#item_" + data.id.internal).sortable({
-        handle: function(e) {
-//        what index am I?
-//          console.log('Dragging item at index ' + $("#item_" + data.id.internal).index())
-
-
-        },
-        stop: function( ) {
-//            console.log("Dragging item at index @ to index @" )
-//            send message to server to say that you have changed position in the queue
-            var ar = $("#item_" + data.id.internal).sortable('toArray')
-            for (i = 0;i<ar.length;i++)
-            {
-                console.log(ar[i])
-            }
-            var payload = CreateDataItem(['custom'])
-            payload.id.internal = data.id.internal
-            payload.custom = ar
-            ws.send(CreateData("server/sort/playlist", payload))
-//            send the whole list to the server, rebuild the items in the playlist to the correct array, then return
-//            the list here and update the data in it.
-
-        }
-    });
-    $("#item_" + data.id.internal).disableSelection();
-
     if (data.playlist.type == 'splitalbum')
     {
+        $("#item_" + data.id.internal).sortable({
+            stop: function( ) {
+    //          send message to server to say that you have changed position in the queue
+                var ar = $("#item_" + data.id.internal).sortable('toArray')
+                var payload = CreateDataItem(['custom'])
+                payload.id.internal = data.id.internal
+                payload.id.client = g_clientid
+                payload.custom = ar
+                ws.send(CreateData("server/sort/videolist", payload))
+    //            send the whole list to the server, rebuild the items in the playlist to the correct array, then return
+    //            the list here and update the data in it.
+            }
+        });
+        $("#item_" + data.id.internal).disableSelection();
         if (data.title.video.youtube != '')
         {
             $("#" + data.id.internal + " .align-middle.fullfile").text(unescape_string(data.title.video.youtube))
@@ -1150,6 +1184,9 @@ function CreateSinglePlaylistEntry(data)
             $("#" + data.id.internal + " .text-right.endTime").text('[' + unescape_string(data.row.duration.formatted) + ']')
         }
         $("#" + data.id.internal + " .form-control.search").val(unescape_string(data.title.playlist.artist) + " - " + unescape_string(data.title.playlist.album) + ' Full album')
+
+
+
 
     }
     else
@@ -1539,6 +1576,82 @@ var sHtml="";
     sHtml += "</div>";
     $(sHtml).appendTo($("#item_" + data.id.internal));
 
+
+    if (type == 'splitalbum')
+        {
+//              $("#" + data.id.internal + "_" + data.id.video + " .form-control.duration.start").keyup(function( event ) {
+//                  var payload = CreateDataItem(['row'])
+//                  payload.row.offset.formatted = $(this).val()
+//                  var tokens = payload.row.offset.formatted.split(':')
+//                  var bProceed = true
+//                  if (tokens.length == 3)
+//                  {
+//                    for (i = 0;i<tokens.length;i++)
+//                    {
+//                        if (isNumeric(tokens[i]) == false)
+//                        {
+//                            bProceed = false
+//
+//                        }
+//                    }
+//                  }
+//                  else
+//                  {
+//                    bProceed = false
+//                  }
+//
+//                  if (bProceed)
+//                  {
+//                      payload.id.client = g_clientid
+//                      payload.id.internal = data.id.internal
+//                      payload.id.video = data.id.video
+//                      console.log('sending:' + payload.row.offset.formatted)
+//                      if ( event.which == 13 ) {
+//
+//                          ws.send(CreateData("server/set/splitalbum/track/offset", payload))
+//                          event.preventDefault();
+//                      }
+//                  }
+//              });
+
+              $("#" + data.id.internal + "_" + data.id.video + " .form-control.duration.end").keyup(function( event ) {
+                  var payload = CreateDataItem(['row'])
+
+                  payload.row.duration.formatted = $(this).val()
+                  var tokens = payload.row.duration.formatted.split(':')
+                  var bProceed = true
+                  if (tokens.length == 3)
+                  {
+                    for (i = 0;i<tokens.length;i++)
+                    {
+                       if (isNumeric(tokens[i]) == false)
+                        {
+                            bProceed = false
+
+                        }
+                    }
+                  }
+                  else
+                  {
+                    bProceed = false
+                  }
+
+                  if (bProceed)
+                  {
+                      payload.id.client = g_clientid
+                      payload.id.internal = data.id.internal
+                      payload.id.video = data.id.video
+                      console.log('sending:' + payload.row.duration.formatted)
+                      ws.send(CreateData("server/set/splitalbum/track/duration", payload))
+                      if ( event.which == 13 ) {
+
+
+                          event.preventDefault();
+                      }
+                  }
+              });
+
+    }
     $("#" + data.id.internal + "_" + data.id.video + " .dropdown-item.stayVisibleNext").click(function(e) {
 //            console.log("Get 5 next and update the dropdownlist")
 //            var start = parseInt($("#altvideos").children().first().attr("data-index-type"))+5

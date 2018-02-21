@@ -590,6 +590,19 @@ class c_utility():
             'second':seconds
         }
         return output
+    def formattedDurationToSeconds(self, formatted):
+        split = formatted.split(':')
+        secondsInhour = int(split[0])*60*60
+        secondsInMinute = int(split[1])*60
+        seconds = int(split[2])
+        return secondsInhour+secondsInMinute+seconds
+
+
+
+
+
+
+
     def durationToSeconds(self, duration):
         """
         duration - ISO 8601 time format
@@ -1786,28 +1799,80 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, c_utility):
                     dataInsertItem['playlist']['duration'] = payload['playlist']['duration']
                     self.insert_data(payload['id']['internal'], dataInsertItem, "playlist")
                     self.updateClients(self.createDataItem('client/update/splitalbum/duration', payload))
-                elif dataItem['type'] == 'server/sort/playlist':
+                elif dataItem['type'] == 'server/sort/videolist':
                     payload = dataItem['payload']
                     dataInsertItem = self.getdata('playlist', self.data, payload)
                     sortedList = []
+                    offset = 0
                     for i in range(len(payload['custom'])):
                         position = payload['custom'][i]
                         position = position.split('_')[1]
                         index = dataInsertItem['index'][position]
-                        item = dataInsertItem['items'][index]
-                        sortedList.append(item)
+                        videoItem = dataInsertItem['items'][index]
+                        videoItem['row']['offset']['seconds'] = offset
+                        timeObj = self.durationToHHMMSS(videoItem['row']['offset']['seconds'])
+                        timeString = timeObj['hour'] + ":" + timeObj['minute'] + ":" + timeObj['second']
+                        videoItem['row']['offset']['formatted'] = timeString
+                        videoItem['row']['tracknumber'] = ("{0:02d}").format(i+1)
+                        offset = offset + videoItem['row']['duration']['seconds']
+                        sortedList.append(videoItem)
+                        dataInsertItem['index'][position] = i
+                        # print(videoItem['id']['video'] + " : " + videoItem['row']['tracknumber'] + " : " + videoItem['title']['video']['track'])
 
                     dataInsertItem['items'] = sortedList
                     self.insert_data(payload['id']['internal'], dataInsertItem, "playlist")
-                    self.updateClients(self.createDataItem('client/update/sortedPlaylist', dataInsertItem))
+                    self.updateClients(self.createDataItem('client/update/sort/videolist', dataInsertItem))
+                    self.updateClients(self.createDataItem('client/update/sort/videolist/full', dataInsertItem), payload['id']['client'], True)
                     # self.updateClients(self.createDataItem('client/add/multiplevideos', playlistItem), clientid)
 
                 # elif dataItem['type'] == 'server/store/results':
                 #     payload = dataItem['payload']
                 #     print(payload)
                 #     self.insert_data(payload['results']['searchterm'], payload['results']['data'], 'search')
+                elif dataItem['type'] == 'server/set/splitalbum/track/duration':
+                    payload = dataItem['payload']
+                    dataInsertItem = self.getdata('playlist', self.data, payload)
 
+                    index = dataInsertItem['index'][payload['id']['video']]
+                    videoItem = dataInsertItem['items'][index]
+                    videoItem['row']['duration']['formatted'] = payload['row']['duration']['formatted']
+                    videoItem['row']['duration']['seconds'] = self.formattedDurationToSeconds(payload['row']['duration']['formatted'])
 
+                    offset = 0
+                    for i in range(len(dataInsertItem['items'])):
+                        videoItem = dataInsertItem['items'][i]
+                        videoItem['row']['offset']['seconds'] = offset
+                        timeObj = self.durationToHHMMSS(videoItem['row']['offset']['seconds'])
+                        timeString = timeObj['hour'] + ":" + timeObj['minute'] + ":" + timeObj['second']
+                        videoItem['row']['offset']['formatted'] = timeString
+                        offset = offset + videoItem['row']['duration']['seconds']
+
+                    timeObj = self.durationToHHMMSS(offset)
+                    timeString = timeObj['hour'] + ":" + timeObj['minute'] + ":" + timeObj['second']
+                    dataInsertItem['playlist']['duration']['formatted'] = timeString
+                    dataInsertItem['playlist']['duration']['seconds'] = offset
+                    self.insert_data(payload['id']['internal'], dataInsertItem, "playlist")
+                    self.updateClients(self.createDataItem('client/update/sort/videolist', dataInsertItem))
+                # elif dataItem['type'] == 'server/set/splitalbum/track/offset':
+                #     payload = dataItem['payload']
+                #     dataInsertItem = self.getdata('playlist', self.data, payload)
+                #
+                #     index = dataInsertItem['index'][payload['id']['video']]
+                #     videoItem = dataInsertItem['items'][index]
+                #     videoItem['row']['offset']['formatted'] = payload['row']['offset']['formatted']
+                #     videoItem['row']['offset']['seconds'] = self.formattedDurationToSeconds(payload['row']['offset']['formatted'])
+                #
+                #     offset = 0
+                #     for i in range(len(dataInsertItem['items'])):
+                #         videoItem = dataInsertItem['items'][i]
+                #         videoItem['row']['offset']['seconds'] = offset
+                #         timeObj = self.durationToHHMMSS(videoItem['row']['offset']['seconds'])
+                #         timeString = timeObj['hour'] + ":" + timeObj['minute'] + ":" + timeObj['second']
+                #         videoItem['row']['offset']['formatted'] = timeString
+                #         offset = offset + videoItem['row']['duration']['seconds']
+                #
+                #     self.insert_data(payload['id']['internal'], dataInsertItem, "playlist")
+                #     self.updateClients(self.createDataItem('client/sort/videolist', dataInsertItem))
 
 
             except KeyboardInterrupt:
