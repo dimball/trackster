@@ -173,3 +173,7 @@ progress {
     color:blue;
 }
 
+.form-control.duration.offset {
+    width: 10px;
+
+}

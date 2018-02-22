@@ -124,6 +124,8 @@ function CreateDataItem(parts = ['filter', 'title.video', 'title.playlist', 'thu
         payload.row.offset = new Object()
         payload.row.offset.seconds = ''
         payload.row.offset.formatted = ''
+        payload.row.silence = new Object()
+        payload.row.silence.seconds = ''
     }
     if (parts.includes('playlist.video'))
     {
@@ -553,7 +555,7 @@ function PartiallyUpdateVideoList(payload)
 //                console.log(payload.id.internal + "_" + row.id.video)
 //                console.log($("#" + payload.id.internal + "_" + row.id.video  + " .form-control.duration.start").text())
                 $("#" + payload.id.internal + "_" + row.id.video  + " .form-control.duration.start").val(row.row.offset.formatted)
-                $("#" + payload.id.internal + "_" + row.id.video  + " .form-control.duration.end").val(row.row.duration.formatted)
+                $("#" + payload.id.internal + "_" + row.id.video  + " .form-control.duration.end").val(row.row.duration.formatted + "|" + row.row.silence.seconds.toString())
                 $("#" + payload.id.internal + "_" + row.id.video  + " .input-group-addon.tracknumber").text(row.row.tracknumber)
 
 //                $("#" + payload.id.internal + "_" + row.id.video  + " .form-control.track").text(row.title.video.track)
@@ -1468,8 +1470,9 @@ var sHtml="";
     if (type == 'splitalbum')
     {
 
-        sHtml += "              <input type=\"text\" class=\"form-control duration start\" placeholder=\"Track duration start\" aria-label=\"track\" value=\"\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"Track duration\">";
-        sHtml += "              <input type=\"text\" class=\"form-control duration end\" placeholder=\"Track duration end\" aria-label=\"track\" value=\"\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"Track duration\">";
+        sHtml += "              <input type=\"text\" class=\"form-control duration start\" placeholder=\"Track duration start\" aria-label=\"track\" value=\"\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"Track duration start\">";
+        sHtml += "              <input type=\"text\" class=\"form-control duration end\" placeholder=\"Track duration end\" aria-label=\"track\" value=\"\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"Track duration end\">";
+//        sHtml += "              <input type=\"text\" class=\"form-control duration offset\" placeholder=\"offset\" aria-label=\"track\" value=\"\" data-toggle=\"tooltip\" data-placement=\"top\" title=\"Track offset\">";
 
 //        sHtml += "              <span class=\"input-group-addon duration\" style=\"width:90px\"data-toggle=\"tooltip\" data-placement=\"top\" title=\"Track duration\">" + data.row.duration.formatted + "</span>";
     }
@@ -1480,8 +1483,16 @@ var sHtml="";
     }
 
     sHtml += "          </div>";
-    sHtml += "      </div>";
 
+
+
+    sHtml += "      </div>";
+//    if (type == 'splitalbum')
+//    {
+//        sHtml += "      <div class=\"col-sm-1\">";
+//
+//        sHtml += "      </div>";
+//    }
 
 
     if (type != 'splitalbum')
@@ -1617,9 +1628,28 @@ var sHtml="";
               $("#" + data.id.internal + "_" + data.id.video + " .form-control.duration.end").keyup(function( event ) {
                   var payload = CreateDataItem(['row'])
 
-                  payload.row.duration.formatted = $(this).val()
-                  var tokens = payload.row.duration.formatted.split(':')
                   var bProceed = true
+
+
+
+
+                  var silenceToken = $(this).val().split('|')
+                  if (silenceToken.length == 2)
+                  {
+                    if (isNumeric(silenceToken[1]) == false)
+                    {
+                        bProceed = false
+                    }
+                  }
+                  else
+                  {
+                    bProceed = false
+                  }
+
+
+
+                  var tokens = silenceToken[0].split(':')
+
                   if (tokens.length == 3)
                   {
                     for (i = 0;i<tokens.length;i++)
@@ -1627,7 +1657,6 @@ var sHtml="";
                        if (isNumeric(tokens[i]) == false)
                         {
                             bProceed = false
-
                         }
                     }
                   }
@@ -1638,6 +1667,8 @@ var sHtml="";
 
                   if (bProceed)
                   {
+                      payload.row.silence.seconds = parseInt(silenceToken[1])
+                      payload.row.duration.formatted = silenceToken[0]
                       payload.id.client = g_clientid
                       payload.id.internal = data.id.internal
                       payload.id.video = data.id.video
@@ -1738,7 +1769,7 @@ var sHtml="";
     if (type == 'splitalbum')
     {
         $("#" + data.id.internal + "_" + data.id.video  + " .form-control.duration.start").val(data.row.offset.formatted)
-        $("#" + data.id.internal + "_" + data.id.video  + " .form-control.duration.end").val(data.row.duration.formatted)
+        $("#" + data.id.internal + "_" + data.id.video  + " .form-control.duration.end").val(data.row.duration.formatted + "|" + data.row.silence.seconds.toString())
     }
 
 

@@ -215,6 +215,9 @@ class c_utility():
                     'offset': {
                         'seconds': '',
                         'formatted': '',
+                    },
+                    'silence': {
+                        'seconds': 0
                     }
             }
         if 'results' in parts:
@@ -1814,7 +1817,7 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, c_utility):
                         timeString = timeObj['hour'] + ":" + timeObj['minute'] + ":" + timeObj['second']
                         videoItem['row']['offset']['formatted'] = timeString
                         videoItem['row']['tracknumber'] = ("{0:02d}").format(i+1)
-                        offset = offset + videoItem['row']['duration']['seconds']
+                        offset = offset + videoItem['row']['duration']['seconds'] + videoItem['row']['silence']['seconds']
                         sortedList.append(videoItem)
                         dataInsertItem['index'][position] = i
                         # print(videoItem['id']['video'] + " : " + videoItem['row']['tracknumber'] + " : " + videoItem['title']['video']['track'])
@@ -1837,7 +1840,7 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, c_utility):
                     videoItem = dataInsertItem['items'][index]
                     videoItem['row']['duration']['formatted'] = payload['row']['duration']['formatted']
                     videoItem['row']['duration']['seconds'] = self.formattedDurationToSeconds(payload['row']['duration']['formatted'])
-
+                    videoItem['row']['silence']['seconds'] = payload['row']['silence']['seconds']
                     offset = 0
                     for i in range(len(dataInsertItem['items'])):
                         videoItem = dataInsertItem['items'][i]
@@ -1845,7 +1848,7 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, c_utility):
                         timeObj = self.durationToHHMMSS(videoItem['row']['offset']['seconds'])
                         timeString = timeObj['hour'] + ":" + timeObj['minute'] + ":" + timeObj['second']
                         videoItem['row']['offset']['formatted'] = timeString
-                        offset = offset + videoItem['row']['duration']['seconds']
+                        offset = offset + videoItem['row']['duration']['seconds'] + videoItem['row']['silence']['seconds']
 
                     timeObj = self.durationToHHMMSS(offset)
                     timeString = timeObj['hour'] + ":" + timeObj['minute'] + ":" + timeObj['second']
