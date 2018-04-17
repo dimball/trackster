@@ -207,13 +207,17 @@ class c_utility():
                     'selected': '',
                     'modified': '',
                     'tracknumber': '',
+
                     'duration': {
-                        'seconds': '',
+                        'seconds': 0,
                         'formatted': '',
+                        'original' : {
+                            'seconds': 0
+                        }
 
                     },
                     'offset': {
-                        'seconds': '',
+                        'seconds': 0,
                         'formatted': '',
                     },
                     'silence': {
@@ -254,7 +258,10 @@ class c_utility():
                 'title': '',
                 'duration': {
                     'seconds': '',
-                    'formatted': ''
+                    'formatted': '',
+                    'original': {
+                        'seconds': 0
+                    }
                 }
             }
         if 'custom' in parts:
@@ -286,7 +293,10 @@ class c_utility():
             #     print('adding recording')
     def getdata(self, type, data, payload):
         if type == 'playlist':
-            index = data['index'][payload['id']['internal']]
+            id = payload['id']['internal']
+            print("MY ID:" + id)
+
+            index = data['index'][id]
 
             payload = data['items'][index]
             return payload
@@ -322,6 +332,7 @@ class c_utility():
         elif len(timesplit) == 3:
             timeobj = datetime.datetime.strptime(datestamp, "%Y-%m-%d").timetuple()
 
+        print(timeobj)
         return time.mktime(timeobj)
     def show_release_details(self, rel):
         """Print some details about a release dictionary to stdout.
@@ -357,7 +368,6 @@ class c_utility():
             trackresult = musicbrainzngs.search_recordings(reid=id)
 
 
-            # print(trackresult)
             for recording in trackresult['recording-list']:
                 payload = self.create_payload(['musicbrainz.track'])
 
@@ -373,10 +383,14 @@ class c_utility():
 
                     payload['mbtrack']['duration'] = {
                         'seconds': durationInSeconds,
-                        'formatted': timeString
+                        'formatted': timeString,
+                        'original': {
+                            'seconds': durationInSeconds
+                        }
                     }
                 dataArray.append(payload)
-                return dataArray
+
+            return dataArray
         except musicbrainzngs.NetworkError:
             self.printMessage("Could not connect to musicbrainz server at:" + MBHOST)
             return None
@@ -1064,12 +1078,14 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, c_utility):
             self.printMessage("searching on musizbrainz for tracks")
             try:
                 search_results = self.get_tracks(payload['musicbrainz']['id'])
+                print(search_results)
                 if search_results != None:
                     # returns an array
                     # store the search results in the database
                     self.insert_data(payload['musicbrainz']['id'], search_results, 'mbsearch_tracks', dbcursor)
                     return search_results
                 else:
+
                     return None
             except requests.exceptions.ConnectionError as e:
                 self.printMessage("Could not connect to internet")
@@ -1093,6 +1109,7 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, c_utility):
 
                     # if the search term has changed then get new, if not use the stored one
                     payload['results']['data'] = []
+                    print("ID should be:" + payload['id']['internal'])
                     dataInsertItem = self.getdata('playlist', self.data, payload)
                     playlistType = dataInsertItem['playlist']['type']
                     # dataMessage = {"items": []}
@@ -1492,7 +1509,8 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, c_utility):
                                 time.sleep(0.4)
                                 data = {
                                     'playlistData': self.data,
-                                    'payload': videoItem
+                                    'payload': videoItem,
+                                    'playlistItem': playlistItem
                                 }
 
                                 self.sendProgressMessage(self.dataTransport, videoItem, "downloading")
@@ -1557,9 +1575,11 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, c_utility):
 
 
                         if payload['download']['current']['videoId'] == dataInsertItem['playlist']['videoItem']['download']['original']['videoId']:
+                            print("inside")
                             dataInsertItem['playlist']['videoItem']['title']['video']['youtube'] = ''
                             payload['title']['video']['original'] = dataInsertItem['playlist']['videoItem']['title']['video']['original']
                         else:
+                            print(payload['title']['video']['youtube'])
                             dataInsertItem['playlist']['videoItem']['title']['video']['youtube'] = self.escape_string(payload['title']['video']['youtube'])
 
                         dataInsertItem['playlist']['videoItem']['download']['current']['videoId'] = payload['download']['current']['videoId']
@@ -1838,9 +1858,28 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, c_utility):
 
                     index = dataInsertItem['index'][payload['id']['video']]
                     videoItem = dataInsertItem['items'][index]
+                    payloadSeconds = self.formattedDurationToSeconds(payload['row']['duration']['formatted'])
+                    bSilenceModified = False
+                    if videoItem['row']['duration']['seconds'] != payloadSeconds:
+                    #     user has changed the duration of the track
+                    #     check how many seconds difference it is from the last entered value
+                        print(videoItem['row']['duration']['seconds'])
+                        # however calculate the second difference from the original value that was initially set.
+
+                        secondDifference = int(videoItem['row']['duration']['original']['seconds'])-payloadSeconds
+
+                  #   if the difference is greater than 0 then
+                    #   add this difference to the silence seconds
+                        if secondDifference>=0:
+                            videoItem['row']['silence']['seconds'] = secondDifference
+                            bSilenceModified = True
+
+
                     videoItem['row']['duration']['formatted'] = payload['row']['duration']['formatted']
                     videoItem['row']['duration']['seconds'] = self.formattedDurationToSeconds(payload['row']['duration']['formatted'])
-                    videoItem['row']['silence']['seconds'] = payload['row']['silence']['seconds']
+                    if bSilenceModified == False:
+                        videoItem['row']['silence']['seconds'] = payload['row']['silence']['seconds']
+
                     offset = 0
                     for i in range(len(dataInsertItem['items'])):
                         videoItem = dataInsertItem['items'][i]
@@ -1985,25 +2024,25 @@ class finisher(threading.Thread, c_utility):
 
                 if not os.path.exists(targetfolder):
                     os.makedirs(targetfolder)
+                if os.path.exists(sourcefolder):
+                    for file in os.listdir(sourcefolder):
+                        filename, ext = os.path.split(file)
+                        shutil.move(sourcefolder + "/" + file, targetfolder + "/" + filename + ext)
+                        self.printMessage("Moving file: " + sourcefolder + "/" + file +  " ---> " + targetfolder + "/" + filename + ext)
 
-                for file in os.listdir(sourcefolder):
-                    filename, ext = os.path.split(file)
-                    shutil.move(sourcefolder + "/" + file, targetfolder + "/" + filename + ext)
-                    self.printMessage("Moving file: " + sourcefolder + "/" + file +  " ---> " + targetfolder + "/" + filename + ext)
+                    if len(os.listdir(sourcefolder + "/")) == 0:
+                        self.printMessage("Removing folder:" + targetfolder)
+                        os.rmdir(sourcefolder + "/")
+                        parentfolder = os.path.dirname(sourcefolder)
+                        if len(os.listdir(parentfolder + "/")) == 1:
+                            if os.listdir(parentfolder + "/")[0] == '.DS_Store':
+                                os.remove(parentfolder + "/" + os.listdir(parentfolder + "/")[0])
 
-                if len(os.listdir(sourcefolder + "/")) == 0:
-                    self.printMessage("Removing folder:" + targetfolder)
-                    os.rmdir(sourcefolder + "/")
-                    parentfolder = os.path.dirname(sourcefolder)
-                    if len(os.listdir(parentfolder + "/")) == 1:
-                        if os.listdir(parentfolder + "/")[0] == '.DS_Store':
-                            os.remove(parentfolder + "/" + os.listdir(parentfolder + "/")[0])
+                        if len(os.listdir(parentfolder + "/")) == 0:
+                            os.rmdir(parentfolder + "/")
+                            self.printMessage("Removing folder:" + parentfolder)
 
-                    if len(os.listdir(parentfolder + "/")) == 0:
-                        os.rmdir(parentfolder + "/")
-                        self.printMessage("Removing folder:" + parentfolder)
-
-                self.plexQueue.put("finished")
+                    self.plexQueue.put("finished")
 
                 self.finishQueue.task_done()
             except KeyboardInterrupt:
@@ -2062,6 +2101,8 @@ class trackworker(threading.Thread, c_utility):
         payload['row']['duration'] = track['mbtrack']['duration']
 
 
+
+
         payload['row']['offset']['seconds'] = offset
         timeObj = self.durationToHHMMSS(payload['row']['offset']['seconds'])
         timeString = timeObj['hour'] + ":" + timeObj['minute'] + ":" + timeObj['second']
@@ -2079,6 +2120,7 @@ class trackworker(threading.Thread, c_utility):
         payload = self.create_payload(['results', 'row'])
         payload['results']['searchterm'] = artist + " - " + title
         payload['row']['tracknumber'] = tracknumber
+        payload['id']['internal'] = internalId
         # search_results = self.select_by_id(self.dbsearch, payload['results']['searchterm'], 'search', 'searchTerm')
         search_results = self.main.getYoutubeResults(payload, self.dbsearch)
 
@@ -2249,6 +2291,7 @@ class trackworker(threading.Thread, c_utility):
         while self.isRunning:
             try:
                 payload = self.videoQueue.get()
+                print(payload)
                 if payload is 'STOP':
                     break
                 if not self.isRunning:
@@ -2301,10 +2344,12 @@ class trackworker(threading.Thread, c_utility):
                         payload,
                         self.dbsearch
                     )
+                    id = payload['id']['internal']
+                    print("THE ID IS:" + id)
                     if tracklist != None:
                         for track in tracklist:
                             self.addTrackItem(
-                                payload['id']['internal'],
+                                id,
                                 track,
                                 payload['title']['playlist']['artist'],
                                 payload['title']['playlist']['album'],
@@ -2330,6 +2375,7 @@ class trackworker(threading.Thread, c_utility):
                         payload,
                         self.dbsearch
                     )
+                    print(tracklist)
 
 
                     # this should just create the track entries with track number, duration, and title
@@ -2588,6 +2634,8 @@ class DownloadWorker(threading.Thread, c_utility):
                 entryData = {
                     'filename': d['filename'],
                     'playlistData': self.playListData,
+                    'playlistItem': self.playlistItem
+
                 }
                 filedata = self.GetDataFromFilename(d['filename'])
                 self.sendProgressMessage(self.main.dataTransport, filedata, "waiting to convert")
@@ -2646,7 +2694,7 @@ class DownloadWorker(threading.Thread, c_utility):
                             # file failed for some reason. Still add it to the result table as has been processed but
                             # failed with some error message
 
-                            if i == retries:
+                            if i == (retries-1):
                                 self.printMessage("[ERROR] failed. Cannot download file. Try again later")
                                 self.sendProgressMessage(self.main.dataTransport, payload,
                                                          "failed:" + self.escape_string(str(e)))
@@ -2735,6 +2783,7 @@ class ConverterWorker(Process, c_utility):
 
                 filename = data['filename']
                 playlistData = data['playlistData']
+
                 playlistItem = data['playlistItem']
 
 
@@ -2757,8 +2806,7 @@ class ConverterWorker(Process, c_utility):
                 #                         "/" + file + '.mp3'
 
                 # remove an existing file
-                if os.path.exists(outputFileName):
-                    os.remove(outputFileName)
+
 
                 if playlistItem['playlist']['type'] == 'splitalbum':
                 #     set the ffmpeg arguments to split the file using some time arguments
@@ -2769,7 +2817,9 @@ class ConverterWorker(Process, c_utility):
 
                     outputFileName = path + '/' + videoData['row']['tracknumber'] + '-' + videoData['title']['track'] + '.mp3'
 
-                    starttime = time.strftime('%H:%M:%S', time.gmtime(videoData['row']['duration']['offset']['seconds']))
+                    if os.path.exists(outputFileName):
+                        os.remove(outputFileName)
+                    starttime = time.strftime('%H:%M:%S', time.gmtime(videoData['row']['duration']['offset']['seconds']+videoData['row']['duration']['silence']['seconds']))
                     endtime = time.strftime('%H:%M:%S', time.gmtime(videoData['row']['duration']['offset']['seconds']+videoData['row']['duration']['seconds']))
                     ffmpeg_args = ['-i',
                                 filename,
@@ -2781,14 +2831,18 @@ class ConverterWorker(Process, c_utility):
 
                     self.sendProgressMessage(self.main.dataTransport, self.GetDataFromFilename(outputFileName), "converting")
                     self.execute_ffmpeg(ffmpeg_args)
+                    filedata = self.GetDataFromFilename(outputFileName)
+                    if os.path.exists(filedata['basepath'] + "/" + filedata['filename'] + ".temp" + filedata['ext']):
+                        os.remove(filedata['basepath'] + "/" + filename + ".temp" + filedata['ext'])
+                    elif os.path.exists(filename):
+                        os.remove(filename)
+                    self.set_id3(outputFileName, playlistData)
 
-                    # self.set_id3(outputFileName, playlistData)
-                # use the offset property
-                # time.strftime('%H:%M:%S', time.gmtime(12345))
                 else:
 
                     outputFileName = path + '/' + file + '.mp3'
-
+                    if os.path.exists(outputFileName):
+                        os.remove(outputFileName)
 
 
 
@@ -2802,7 +2856,9 @@ class ConverterWorker(Process, c_utility):
                     self.sendProgressMessage(self.main.dataTransport, self.GetDataFromFilename(outputFileName), "converting")
 
                     self.execute_ffmpeg(ffmpeg_args)
+
                     # remove the old unconverted audio file
+                    # do not remove this if this is a split album as other converters may be still using it
                     filedata = self.GetDataFromFilename(outputFileName)
 
 

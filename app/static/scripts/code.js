@@ -1179,16 +1179,21 @@ function CreateSinglePlaylistEntry(data)
             }
         });
         $("#item_" + data.id.internal).disableSelection();
-        if (data.title.video.youtube != '')
+        console.log('data is:' + data.playlist.videoItem.title.video.youtube)
+        if (data.playlist.videoItem.title.video.youtube != '')
         {
-            $("#" + data.id.internal + " .align-middle.fullfile").text(unescape_string(data.title.video.youtube))
-            $("#" + data.id.internal + " .img-responsive.thumbnail").prop('src', data.thumbnail.current.default)
-            $("#" + data.id.internal + " .text-right.endTime").text('[' + unescape_string(data.row.duration.formatted) + ']')
+            $("#" + data.id.internal + " .align-middle.fullfile").text(unescape_string(data.playlist.videoItem.title.video.youtube))
+            $("#" + data.id.internal + " .img-responsive.thumbnail").prop('src', data.playlist.videoItem.thumbnail.current.default)
+            $("#" + data.id.internal + " .text-right.endTime").text('[' + unescape_string(data.playlist.videoItem.row.duration.formatted) + ']')
         }
         $("#" + data.id.internal + " .form-control.search").val(unescape_string(data.title.playlist.artist) + " - " + unescape_string(data.title.playlist.album) + ' Full album')
 
-
-
+        if (data.title.video.youtube != '')
+        {
+            $("#" + data.id.internal + " .img-responsive.thumbnail").prop('src', data.thumbnail.current.default)
+            $("#" + data.id.internal + " .align-middle.fullfile").text(unescape_string(data.title.video.youtube))
+            $("#" + data.id.internal + " .text-right.endTime").text('[' + unescape_string(data.row.duration.formatted) + ']')
+        }
 
     }
     else
