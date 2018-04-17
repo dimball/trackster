@@ -376,15 +376,16 @@ function serverHandler(data)
                 case "client/set/searchvideo":
 //                    "#" + payload.id.internal + "_" + payload.id.video  + " .video_alternate_items"
                     $(payload.results.target).empty()
-                    console.log(payload.results.target)
-                    console.log(payload.results.data)
+//                    console.log(payload.results.target)
+//                    console.log(payload.results.data)
 //                    console.log($("#altvideos").length)
                     for (var video in payload.results.data)
                     {
                         var VideoItem = payload.results.data[video]
 
 //                        console.log(VideoItem)
-                        CreateAlternateVideos(VideoItem, payload.results.target)
+                          console.log(payload.results.target)
+                          CreateAlternateVideos(VideoItem, payload.results.target)
                     }
 
 
@@ -904,7 +905,7 @@ function CreateAlternateVideos(data, target)
     sHtml += "      </div>"
     sHtml += "  </div>"
     sHtml += "</a>"
-
+    console.log("target is:" + target)
     $(sHtml).appendTo($(target));
     console.log("Creating new data")
     $(target + " .dropdown-item.item[data-index-type=" + data.results.index + "]").on('click', function (e) {
@@ -1697,7 +1698,7 @@ var sHtml="";
             g_iStart += 5
             g_iEnd += 5
             payload.results.searchterm = searchterm
-            payload.results.target = "#" + data.id.internal + "_" + data.id.video
+            payload.results.target = "#" + data.id.internal + "_" + data.id.video + " .video_alternate_items"
             payload.id.client = g_clientid
             payload.id.internal = data.id.internal
             payload.id.video = data.id.video
@@ -1730,7 +1731,7 @@ var sHtml="";
 
             }
             payload.results.searchterm = searchterm
-            payload.results.target = "#" + data.id.internal + "_" + data.id.video
+            payload.results.target = "#" + data.id.internal + "_" + data.id.video + " .video_alternate_items"
 
             payload.id.client = g_clientid
             payload.id.internal = data.id.internal
@@ -1884,7 +1885,7 @@ var sHtml="";
         var payload = CreateDataItem(['results', 'download.video', 'row'])
         var searchterm = $("#" + data.id.internal + "_" + data.id.video + " .form-control.search").val()
         payload.results.searchterm = searchterm
-        payload.results.target = "#" + data.id.internal + "_" + data.id.video
+        payload.results.target = "#" + data.id.internal + "_" + data.id.video + " .video_alternate_items"
         payload.id.client = g_clientid
         payload.id.internal = data.id.internal
         payload.id.video = data.id.video
