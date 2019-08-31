@@ -6,7 +6,7 @@ from tornado import gen
 from tornado import queues
 import os
 import json
-import YtDownloader_multithreaded
+import main
 from multiprocessing import JoinableQueue
 from queue import Queue
 import uuid
@@ -109,7 +109,7 @@ class Application(tornado.web.Application):
             'static_path' : os.path.join(os.path.dirname(__file__), "static")
         }
         # print(settings)
-        self.Ytdownloader = YtDownloader_multithreaded.Main(self.data)
+        self.Ytdownloader = main.Main(self.data)
         self.Ytdownloader.start()
 
         tornado.web.Application.__init__(self, handlers, **settings)

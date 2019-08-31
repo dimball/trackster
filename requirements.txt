@@ -1,0 +1,6 @@
+youtube_dl
+tornado==4.5.3
+musicbrainzngs
+uuid
+mutagen
+requests
