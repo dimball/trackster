@@ -4,3 +4,4 @@ musicbrainzngs
 uuid
 mutagen
 requests
+psutil

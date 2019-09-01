@@ -126,6 +126,20 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, Utility):
         self.PlaylistManager = PlayListManager(self, self.params)
         self.PlaylistManager.start()
 
+    # def close(self):
+    #     for worker in self.downloadWorkers:
+    #         worker.stop()
+    #     for worker in self.converterWorkers:
+    #         worker.stop()
+    #     for worker in self.trackworkers:
+    #         worker.stop()
+    #     for worker in self.finishworkers:
+    #         worker.stop()
+    #
+    #     self.PlaylistManager.stop()
+    #
+    #     time.sleep(5)
+    #     self.printMessage("Stopped all threads and database connections")
 
 
     # database utils
@@ -495,6 +509,11 @@ class Main(threading.Thread, tornado.websocket.WebSocketHandler, Utility):
         self.PlaylistManager.stop()
         self.dataTransport.put('STOP')
         self.isRunning = False
+        time.sleep(2)
+    def reloadYDL(self):
+        for p in self.downloadWorkers:
+            p.reloadYDL()
+
 
     def run(self):
 

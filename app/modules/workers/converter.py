@@ -82,10 +82,12 @@ class Worker(Process, Utility):
         while self.isRunning:
             try:
                 data = self.convertQueue.get()
-                if data is 'STOP':
+                print(data)
+                if data == "STOP":
+                    self.isRunning = False
                     break
 
-
+                print("running")
                 filename = data['filename']
                 playlistData = data['playlistData']
 

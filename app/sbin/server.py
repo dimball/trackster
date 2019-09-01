@@ -4,16 +4,22 @@ import tornado.httpserver
 import tornado.ioloop
 from tornado import gen
 from tornado import queues
-import os
 import json
-import main
+from modules.main import Main
 from multiprocessing import JoinableQueue
 from queue import Queue
 import uuid
-# public_root = os.path.join(os.path.dirname(__file__), 'public')
+from modules.common.packageinstaller import install
+import os
+import sys
+import psutil
+import logging
+
+
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def initialize(self, data):
         self.data = data
+
     connections = []
     def createDataItem(self, type, payload):
         data = {
@@ -41,6 +47,16 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         if payload['type'] == 'server/login':
             if payload['payload']['password'] == '1234':
                 self.render("index.html", data=self.data)
+        elif payload['type'] == 'server/updateydl':
+            print("updating youtube dl")
+            self.data["main"].stop()
+            install("youtube_dl")
+            self.restart_program()
+
+        elif payload['type'] == 'server/restart':
+            print("Restarting trackster")
+            self.data["main"].stop()
+            self.restart_program()
         else:
             self.data['data_transport'].put(payload)
 
@@ -57,7 +73,19 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             del self.data['connection_id'][targetId]
 
         self.data['connections'].remove(self)
+    def restart_program(self):
+        """Restarts the current program, with file objects and descriptors
+           cleanup
+        """
+        try:
+            p = psutil.Process(os.getpid())
+            for handler in p.open_files() + p.connections():
+                os.close(handler.fd)
+        except e:
+            logging.error(e)
 
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
 class IndexPageHandler(tornado.web.RequestHandler):
     def initialize(self, data):
         self.data = data['structure']
@@ -108,9 +136,11 @@ class Application(tornado.web.Application):
             'template_path': templatePath,
             'static_path' : os.path.join(os.path.dirname(__file__), "static")
         }
-        # print(settings)
-        self.Ytdownloader = main.Main(self.data)
+        print("Running server")
+        self.Ytdownloader = Main(self.data)
         self.Ytdownloader.start()
+
+        self.data["main"] = self.Ytdownloader
 
         tornado.web.Application.__init__(self, handlers, **settings)
 
@@ -141,7 +171,7 @@ class Application(tornado.web.Application):
 
 
 if __name__ == '__main__':
-
+    # install("youtube_dl")
     ws_app = Application()
     server = tornado.httpserver.HTTPServer(ws_app)
     server.listen(8080)

@@ -1,5 +1,5 @@
-var ws;
-var g_data;
+var ws
+let g_data
 var g_clientid;
 var g_waiting_to_show = {};
 
@@ -7,7 +7,7 @@ var g_filter_is_open = false;
 var g_iStart = 0
 var g_iEnd = 0
 var g_connectingTimerObj = null
-var g_dltype = 1;
+const g_dltype = 1;
 //Utilities
 function isNumeric(value) {
     return /^-{0,1}\d+$/.test(value);
@@ -646,38 +646,39 @@ function updateResult(payload)
         SetSpinner(false, "fa fa-play-circle", "#" + payload.id.internal + "_start")
    }
 }
-function ResetResults(data)
-{
-   var internalId = ""
+function ResetResults(data) {
+  var internalId = "";
 
-   for (var index in data)
-   {
-        var entry = data[index]
-        var status = $("#" + entry.id.internal + "_" + entry.id.video + " .form-control.text-sm-center.status").val()
-        if (status != "skipped")
-        {
-            $("#" + entry.id.internal + "_" + entry.id.video + " .form-control.text-sm-center.status").val("queued")
-        }
+  for (var index in data) {
+    var entry = data[index];
+    var status = $(
+      "#" +
+        entry.id.internal +
+        "_" +
+        entry.id.video +
+        " .form-control.text-sm-center.status"
+    ).val();
+    if (status != "skipped") {
+      $(
+        "#" +
+          entry.id.internal +
+          "_" +
+          entry.id.video +
+          " .form-control.text-sm-center.status"
+      ).val("queued");
+    }
+  }
 
-
-//        document.getElementById(data[item].internalId).getElementsByClassName(data[item].videoId)[0].getElementsByClassName("progress")[0]
-//        FileStatus.innerHTML = data[item].status
-//        internalId = data[item].internalId
-   }
-
-   $("#" + data[0].id.internal + " .progress-bar.progress-bar-striped.active.progressValue").width("0%")
-   $("#" + data[0].id.internal + " .progress-bar.progress-bar-striped.active.progressValue").text("0% download complete")
-
-
-//   document.getElementById(internalId).getElementsByClassName('playlist_progressbar')[0].value = 0
-//   document.getElementById(internalId).getElementsByClassName('playlist_progressbarValue')[0].innerHTML = "0%"
-//   document.getElementById(internalId).getElementsByClassName('startElement')[0].disabled = true
-//   document.getElementById(internalId).getElementsByClassName('removeElement')[0].disabled = true
-
-
-
-
-
+  $(
+    "#" +
+      data[0].id.internal +
+      " .progress-bar.progress-bar-striped.active.progressValue"
+  ).width("0%");
+  $(
+    "#" +
+      data[0].id.internal +
+      " .progress-bar.progress-bar-striped.active.progressValue"
+  ).text("0% download complete");
 }
 function AddFilterItem(data)
 {
@@ -732,14 +733,11 @@ function AddFilterItem(data)
         payload.id.client = g_clientid
         ws.send(CreateData("server/set/filteritem", payload))
 
-        if ( event.which == 13 ) {
+        if ( 
+            event.which == 13 ) {
              event.preventDefault();
         }
     });
-
-
-
-
 }
 function createUserStatus(parent)
 {
@@ -1959,6 +1957,15 @@ function SetSpinner(bSpinnerSet, resetIcon, target)
 }
 $(document).ready(function () {
 
+        $("#updateydl").on('click', function(e) {
+            console.log("updating youtube dl and restarting threads")
+            ws.send(CreateData("server/updateydl", {}))
+        })
+
+        $("#restart").on('click', function(e) {
+            console.log("Restarting trackster")
+            ws.send(CreateData("server/restart", {}))
+        })
         $("#clearcache").on('click', function(e) {
             console.log("clearing cache")
             var modalform = $("#modal_form")

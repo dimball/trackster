@@ -2,12 +2,13 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import youtube_dl
 import threading
+import importlib
 import time
 import random
 from common.utility import Utility
 class Worker(threading.Thread, Utility):
     def __init__(self, main, id):
-        # Process.__init__(self)
+        # print()
         threading.Thread.__init__(self)
         self.downloadQueue = main.DownloadQueue
         self.convertQueue = main.ConvertQueue
@@ -17,6 +18,8 @@ class Worker(threading.Thread, Utility):
         self.main = main
         self.playListData = {}
         self.playlistItem = None
+    def reloadYDL(self):
+        importlib.reload(youtube_dl)
     def _download_hook(self, d):
         if d['status'] == 'finished':
 
