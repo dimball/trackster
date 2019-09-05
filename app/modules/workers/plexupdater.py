@@ -4,7 +4,7 @@ import requests
 import threading
 import time
 import xml.etree.ElementTree as etree
-from common.utility import Utility
+from modules.common.utility import Utility
 
 class Worker(threading.Thread, Utility):
     def __init__(self, main, params):

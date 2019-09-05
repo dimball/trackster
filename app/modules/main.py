@@ -13,7 +13,7 @@ from mutagen.easyid3 import EasyID3
 import sqlite3
 import musicbrainzngs
 import time
-from common.utility import Utility
+from modules.common.utility import Utility
 from modules.workers.plexupdater import Worker as Plexupdater
 from modules.workers.finisher import Worker as Finisher
 from modules.workers.track import Worker as Track

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import threading
 import shutil
 import os
-from common.utility import Utility
+from modules.common.utility import Utility
 class Worker(threading.Thread, Utility):
     def __init__(self, main, params):
         threading.Thread.__init__(self)

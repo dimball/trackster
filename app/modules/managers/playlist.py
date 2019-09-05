@@ -6,7 +6,7 @@ import threading
 from urllib.parse import urlparse
 from urllib.parse import parse_qsl
 import uuid
-from common.utility import Utility
+from modules.common.utility import Utility
 class Manager(threading.Thread, Utility):
     def __init__(self, main, params):
         threading.Thread.__init__(self)

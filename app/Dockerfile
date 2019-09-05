@@ -91,6 +91,7 @@ RUN pip3 install -r requirements.txt
 # ----------------------------------------
 
 ADD app /code/app
+ADD venv /code/venv
 
 # Step 3: Configure entrypoint
 # ----------------------------------------

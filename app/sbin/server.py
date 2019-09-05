@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0,r'./')
 import tornado.web
 import tornado.websocket
 import tornado.httpserver
@@ -11,11 +13,12 @@ from queue import Queue
 import uuid
 from modules.common.packageinstaller import install
 import os
-import sys
+
 import psutil
 import logging
 
-
+# using username and password
+# ACCESSTOKEN = "70d6a1cab9e8de58db5e0a2576ccf3a609dcf2c9"
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def initialize(self, data):
         self.data = data
@@ -81,7 +84,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             p = psutil.Process(os.getpid())
             for handler in p.open_files() + p.connections():
                 os.close(handler.fd)
-        except e:
+        except Exception as e:
             logging.error(e)
 
         python = sys.executable
@@ -126,8 +129,8 @@ class Application(tornado.web.Application):
             (r'/websocket', WebSocketHandler, dict(data=self.data))
         ]
         templatePath = 'templates'
-        if not os.path.exists("./templates"):
-            templatePath = 'app/templates'
+        if not os.path.exists("../templates"):
+            templatePath = 'templates'
             print("using Production mode. path:" + templatePath)
         else:
             print("using Dev mode path:" + templatePath)
@@ -170,14 +173,22 @@ class Application(tornado.web.Application):
                 self.MessageQueue.task_done()
 
 
+
+
+
+
 if __name__ == '__main__':
-    # install("youtube_dl")
     ws_app = Application()
     server = tornado.httpserver.HTTPServer(ws_app)
-    server.listen(8080)
+    server.listen(8085)
     try:
         tornado.ioloop.IOLoop.current().spawn_callback(ws_app.consumer)
         tornado.ioloop.IOLoop.instance().start()
         # yield ws_app.MessageQueue.join()
     except KeyboardInterrupt:
         ws_app.Ytdownloader.stop()
+
+
+
+
+

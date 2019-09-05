@@ -7,7 +7,7 @@ import os
 from mutagen.easyid3 import EasyID3
 import re  # Regular expression library
 import time
-from common.utility import Utility
+from modules.common.utility import Utility
 FFMPEG_CMD = ['ffmpeg']
 EasyID3.RegisterTextKey('comment', 'COMM')
 class Worker(Process, Utility):

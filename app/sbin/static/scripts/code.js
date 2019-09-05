@@ -1,3 +1,6 @@
+// this whole codebase needs to be refactored into multiple files, and made into more es6 style coding. Lots of work to be done here
+// which needs to be done in visual studio code. For now it is ok, but this needs to be done before more work can be added to this.
+
 var ws
 let g_data
 var g_clientid;
@@ -231,7 +234,8 @@ function getData()
 function connectingTimer()
 {
     try {
-        getData();
+
+//        onLoad()
         clearInterval(g_connectingTimerObj);
     }
     catch(err) {
@@ -244,7 +248,7 @@ function connectingTimer()
 function onLoad() {
     var hostname = window.location.hostname
 // This connect the client to the server. It will then send the client ID at this point.
-    ws = new WebSocket("ws://" + hostname + ":8080/websocket");
+    ws = new WebSocket("ws://" + hostname + ":8085/websocket");
 //    onload initiates the websocket connection with the webserver backend
 //    sets up the onmessage callback.
     ws.onmessage = function(e) {
@@ -252,6 +256,7 @@ function onLoad() {
 //        console.log(e.data)
         serverHandler(e.data)
     };
+
 
 
 
@@ -1955,16 +1960,23 @@ function SetSpinner(bSpinnerSet, resetIcon, target)
         element.prop('disabled', false)
     }
 }
+function timeRefresh(timeoutPeriod) {
+            setTimeout("location.reload(true);", timeoutPeriod);
+}
 $(document).ready(function () {
 
         $("#updateydl").on('click', function(e) {
             console.log("updating youtube dl and restarting threads")
             ws.send(CreateData("server/updateydl", {}))
+            g_connectingTimerObj = setInterval(connectingTimer, 10)
+
+
         })
 
         $("#restart").on('click', function(e) {
             console.log("Restarting trackster")
             ws.send(CreateData("server/restart", {}))
+            g_connectingTimerObj = setInterval(connectingTimer, 10)
         })
         $("#clearcache").on('click', function(e) {
             console.log("clearing cache")
